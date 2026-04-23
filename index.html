@@ -384,7 +384,7 @@ nav{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 28p
 const API = 'https://web-production-0a965.up.railway.app';
 
 // ── THEME ──
-let dark = localStorage.getItem('mv_theme')==='dark';
+let dark = localStorage.getItem('mv_theme') !== 'light';
 const applyTheme=()=>{document.documentElement.setAttribute('data-theme',dark?'dark':'light');document.getElementById('themeBtn').textContent=dark?'☀️':'🌙';};
 applyTheme();
 document.getElementById('themeBtn').addEventListener('click',()=>{dark=!dark;localStorage.setItem('mv_theme',dark?'dark':'light');applyTheme();});
