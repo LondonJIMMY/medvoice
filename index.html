@@ -382,6 +382,9 @@ nav{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 28p
 // IMPORTANT: After Railway deploy, change this to your Railway URL
 // e.g. const API = 'https://medvoice-production.up.railway.app';
 const API = 'http://104.131.165.18:8000';
+const SUPA_URL = 'https://gpfwrseiwjikgnlqgyra.supabase.co';
+const SUPA_KEY = 'sb_publishable_WS4Dvn2WEgjbTC3Pvfvabg_RV0av3HS';
+const SH = {'Content-Type':'application/json','apikey':SUPA_KEY};
 
 // ── THEME ──
 let dark = localStorage.getItem('mv_theme') !== 'light';
@@ -407,9 +410,9 @@ async function doSignIn(e){
   const btn=document.getElementById('btnSI'),err=document.getElementById('errSI');
   btn.disabled=true;btn.textContent='Signing in…';err.style.display='none';
   try{
-    const r=await fetch(API+'/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('siEmail').value,password:document.getElementById('siPass').value})});
+    const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:SH,body:JSON.stringify({email:document.getElementById('siEmail').value,password:document.getElementById('siPass').value})});
     const d=await r.json();
-    if(!r.ok)throw new Error(d.detail||'Sign in failed');
+    if(!r.ok)throw new Error(d.error_description||d.msg||'Invalid email or password');
     token=d.access_token;user=d.user;
     localStorage.setItem('mv_tok',token);localStorage.setItem('mv_usr',JSON.stringify(user));
     enterApp();
@@ -424,11 +427,12 @@ async function doSignUp(e){
   try{
     const email=document.getElementById('suEmail').value;
     const password=document.getElementById('suPass').value;
-    const r=await fetch(API+'/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,name:document.getElementById('suName').value,role:document.getElementById('suRole').value})});
+    const name=document.getElementById('suName').value;
+    const role=document.getElementById('suRole').value;
+    const r=await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:SH,body:JSON.stringify({email,password,data:{name,role}})});
     const d=await r.json();
-    if(!r.ok)throw new Error(d.detail||'Signup failed');
-    // Auto sign in immediately after account creation
-    const r2=await fetch(API+'/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    if(d.error)throw new Error(d.error_description||'Signup failed');
+    const r2=await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:SH,body:JSON.stringify({email,password})});
     const d2=await r2.json();
     if(r2.ok&&d2.access_token){token=d2.access_token;user=d2.user;localStorage.setItem('mv_tok',token);localStorage.setItem('mv_usr',JSON.stringify(user));enterApp();return;}
     // If auto-login fails (email confirmation still on), show message
@@ -442,12 +446,12 @@ async function doReset(e){
   e.preventDefault();
   const err=document.getElementById('errRE'),suc=document.getElementById('sucRE');
   err.style.display='none';suc.style.display='none';
-  try{await fetch(API+'/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('reEmail').value})});suc.textContent='✅ If that email exists, a reset link has been sent.';suc.style.display='block';}
+  try{await fetch(SUPA_URL+'/auth/v1/recover',{method:'POST',headers:SH,body:JSON.stringify({email:document.getElementById('reEmail').value})});suc.textContent='✅ If that email exists, a reset link has been sent.';suc.style.display='block';}
   catch{err.textContent='Error sending email.';err.style.display='block';}
 }
 
 async function doSignOut(){
-  try{await fetch(API+'/auth/signout',{method:'POST',headers:{Authorization:'Bearer '+token}});}catch{}
+  try{await fetch(SUPA_URL+'/auth/v1/logout',{method:'POST',headers:{...SH,Authorization:'Bearer '+token}});}catch{}
   token=null;user=null;localStorage.removeItem('mv_tok');localStorage.removeItem('mv_usr');
   document.getElementById('appScreen').classList.remove('visible');
   document.getElementById('authScreen').style.display='flex';
