@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedVoice — Clinical Dictation</title>
+<link rel="icon" href="data:image/svg+xml,<svg viewBox='240 70 200 170' xmlns='http://www.w3.org/2000/svg'><rect x='316' y='80' width='48' height='72' rx='24' fill='%231B6FE8'/><rect x='336' y='96' width='8' height='40' rx='2' fill='white' opacity='0.9'/><rect x='322' y='110' width='36' height='8' rx='2' fill='white' opacity='0.9'/><path d='M294 152 Q294 196 340 196 Q386 196 386 152' fill='none' stroke='%231B6FE8' stroke-width='5' stroke-linecap='round'/><line x1='340' y1='196' x2='340' y2='218' stroke='%231B6FE8' stroke-width='5' stroke-linecap='round'/><line x1='316' y1='218' x2='364' y2='218' stroke='%231B6FE8' stroke-width='5' stroke-linecap='round'/><path d='M272 138 Q264 152 272 166' fill='none' stroke='%2334C4A4' stroke-width='4' stroke-linecap='round'/><path d='M408 138 Q416 152 408 166' fill='none' stroke='%2334C4A4' stroke-width='4' stroke-linecap='round'/></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+[data-theme="light"]{--bg:#f0f2f5;--white:#fff;--surface:#f8f9fb;--border:#e2e6ec;--border-strong:#c8cfd9;--text:#0f1923;--text-sub:#5a6472;--text-muted:#9aa3b0;--input-bg:#f8f9fb;--input-bg-focus:#fff;--card-bg:#fff;--nav-bg:#fff;--mic-from:#0d1520;--mic-to:#1b2840;--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow:0 4px 16px rgba(0,0,0,0.08);--shadow-lg:0 12px 40px rgba(0,0,0,0.10);}
+[data-theme="dark"]{--bg:#0d1117;--white:#161b22;--surface:#0d1117;--border:#21262d;--border-strong:#30363d;--text:#e6edf3;--text-sub:#8b949e;--text-muted:#484f58;--input-bg:#0d1117;--input-bg-focus:#161b22;--card-bg:#161b22;--nav-bg:#161b22;--mic-from:#010409;--mic-to:#0d1117;--shadow-sm:0 1px 3px rgba(0,0,0,0.3);--shadow:0 4px 16px rgba(0,0,0,0.4);--shadow-lg:0 12px 40px rgba(0,0,0,0.5);}
+:root{--accent:#2563eb;--accent-l:rgba(37,99,235,0.12);--accent-glow:rgba(37,99,235,0.2);--green:#16a34a;--green-l:rgba(22,163,74,0.12);--red:#dc2626;--red-l:rgba(220,38,38,0.12);--amber:#d97706;--radius:14px;--rsm:8px;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;transition:background 0.3s,color 0.3s;overflow-x:hidden;}
+
+/* AUTH */
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);width:100%;max-width:420px;overflow:hidden;}
+.auth-top{background:linear-gradient(135deg,#0d1520,#1b2840);padding:32px;text-align:center;}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;}
+.auth-logo-name{font-size:24px;font-weight:700;color:#fff;letter-spacing:-0.5px;}
+.auth-logo-name span{color:#34C4A4;}
+.auth-tagline{font-size:11px;color:#6b7e99;font-family:'Geist Mono',monospace;letter-spacing:0.08em;}
+.auth-body{padding:28px 32px;}
+.auth-tabs{display:flex;gap:0;margin-bottom:22px;background:var(--surface);border-radius:var(--rsm);padding:3px;}
+.auth-tab{flex:1;padding:8px;border:none;background:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text-muted);border-radius:6px;transition:all 0.2s;}
+.auth-tab.active{background:var(--card-bg);color:var(--text);box-shadow:var(--shadow-sm);}
+.aform{display:flex;flex-direction:column;gap:13px;}
+.aform.hidden{display:none;}
+.af{display:flex;flex-direction:column;gap:5px;}
+.af label{font-size:11px;font-weight:600;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.04em;}
+.ai{background:var(--input-bg);border:1.5px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:'Sora',sans-serif;font-size:14px;padding:10px 14px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
+.ai:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.abtn{background:var(--accent);color:white;border:none;border-radius:var(--rsm);padding:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:4px;box-shadow:0 2px 8px var(--accent-glow);}
+.abtn:hover{background:#1d4ed8;transform:translateY(-1px);}
+.abtn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.aerr{background:var(--red-l);border:1px solid rgba(220,38,38,0.25);border-radius:var(--rsm);padding:10px 12px;font-size:12px;color:var(--red);display:none;}
+.asuc{background:var(--green-l);border:1px solid rgba(22,163,74,0.25);border-radius:var(--rsm);padding:10px 12px;font-size:12px;color:var(--green);display:none;}
+.aforgot{text-align:right;margin-top:-6px;}
+.aforgot button{background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;}
+.aback{text-align:center;margin-top:4px;}
+.aback button{background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;}
+
+/* APP */
+.app-screen{display:none;}
+.app-screen.visible{display:block;}
+
+/* NAV */
+nav{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;transition:background 0.3s,border-color 0.3s;}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.logo-name{font-size:18px;font-weight:700;letter-spacing:-0.5px;}
+.logo-name span{color:#34C4A4;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.theme-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.theme-btn:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+.spill{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'Geist Mono',monospace;padding:5px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);transition:all 0.3s;}
+.spill.live{background:var(--red-l);border-color:rgba(220,38,38,0.3);color:var(--red);}
+.spill.ok{background:var(--green-l);border-color:rgba(22,163,74,0.3);color:var(--green);}
+.sdot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+.spill.live .sdot{animation:blink 0.8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.umenu{position:relative;}
+.ubtn{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif;}
+.ubtn:hover{border-color:var(--border-strong);}
+.uav{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;}
+.uname{font-size:12px;font-weight:600;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.udrop{position:absolute;top:calc(100% + 8px);right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--rsm);box-shadow:var(--shadow-lg);min-width:180px;overflow:hidden;display:none;z-index:200;}
+.udrop.open{display:block;}
+.udrop-email{padding:10px 14px;font-size:11px;color:var(--text-muted);font-family:'Geist Mono',monospace;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.udrop-item{padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text-sub);transition:background 0.15s;}
+.udrop-item:hover{background:var(--surface);color:var(--text);}
+.udrop-item.danger{color:var(--red);}
+.udrop-item.danger:hover{background:var(--red-l);}
+
+/* LAYOUT */
+.page{display:grid;grid-template-columns:270px 1fr 270px;gap:18px;padding:22px 28px;max-width:1440px;margin:0 auto;align-items:start;}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;transition:background 0.3s,border-color 0.3s;}
+.card-hd{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);}
+.card-body{padding:16px;}
+
+/* PROVIDER */
+.prov-chip{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--rsm);background:var(--accent-l);border:1px solid rgba(37,99,235,0.2);}
+.pav{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;}
+.pname{font-size:13px;font-weight:600;}
+.prole{font-size:11px;color:var(--text-sub);}
+.pedit{display:none;margin-top:10px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);}
+.pedit.open{display:block;}
+.pinput{width:100%;background:var(--input-bg);border:1.5px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:'Sora',sans-serif;font-size:13px;padding:8px 10px;outline:none;margin-bottom:8px;transition:border-color 0.2s;}
+.pinput:last-of-type{margin-bottom:0;}
+.pinput:focus{border-color:var(--accent);}
+.psave{width:100%;margin-top:8px;padding:8px;background:var(--accent);color:white;border:none;border-radius:var(--rsm);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+.psave:hover{background:#1d4ed8;}
+
+/* FIELDS */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:11px;font-weight:600;color:var(--text-sub);letter-spacing:0.04em;text-transform:uppercase;}
+.field input,.field select{background:var(--input-bg);border:1.5px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:'Sora',sans-serif;font-size:13px;font-weight:500;padding:9px 12px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+[data-theme="dark"] .field select option{background:#161b22;}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:10px;text-align:center;}
+.snum{font-size:20px;font-weight:700;font-family:'Geist Mono',monospace;line-height:1;}
+.slbl{font-size:10px;color:var(--text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.06em;}
+
+/* MIC */
+.center-col{display:flex;flex-direction:column;gap:14px;}
+.mic-card{background:linear-gradient(135deg,var(--mic-from),var(--mic-to));border:1px solid #253347;border-radius:var(--radius);padding:22px 24px;display:flex;align-items:center;gap:22px;box-shadow:var(--shadow);}
+[data-theme="dark"] .mic-card{border-color:#1c2433;}
+.mic-btn{width:76px;height:76px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#2563eb,#0891b2);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 18px rgba(37,99,235,0.45);transition:transform 0.2s;flex-shrink:0;}
+.mic-btn:hover{transform:scale(1.07);}
+.mic-btn.recording{background:linear-gradient(135deg,#dc2626,#f97316);box-shadow:0 4px 18px rgba(220,38,38,0.5);animation:rr 1.5s ease-out infinite;}
+@keyframes rr{0%{box-shadow:0 0 0 0 rgba(220,38,38,0.5)}70%{box-shadow:0 0 0 22px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.mic-head{font-size:19px;font-weight:700;color:#e6edf3;margin-bottom:3px;}
+.mic-sub{font-size:12px;color:#6b7e99;margin-bottom:12px;}
+.waveform{display:flex;align-items:center;gap:3px;height:28px;opacity:0.2;transition:opacity 0.3s;}
+.waveform.active{opacity:1;}
+.wbar{width:3px;border-radius:2px;background:#3b82f6;animation:wv 0.7s ease-in-out infinite;}
+.wbar:nth-child(even){animation-delay:0.15s;background:#06b6d4;}
+.wbar:nth-child(3n){animation-delay:0.3s;}
+@keyframes wv{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}
+.wbar:nth-child(1){height:10px}.wbar:nth-child(2){height:18px}.wbar:nth-child(3){height:24px}.wbar:nth-child(4){height:30px}.wbar:nth-child(5){height:16px}.wbar:nth-child(6){height:26px}.wbar:nth-child(7){height:12px}.wbar:nth-child(8){height:22px}.wbar:nth-child(9){height:28px}.wbar:nth-child(10){height:14px}.wbar:nth-child(11){height:20px}.wbar:nth-child(12){height:26px}.wbar:nth-child(13){height:18px}.wbar:nth-child(14){height:10px}.wbar:nth-child(15){height:24px}.wbar:nth-child(16){height:20px}.wbar:nth-child(17){height:14px}.wbar:nth-child(18){height:28px}.wbar:nth-child(19){height:10px}.wbar:nth-child(20){height:16px}
+.recrow{display:none;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:#f97316;font-family:'Geist Mono',monospace;}
+.recrow.show{display:flex;}
+.recdot{width:7px;height:7px;border-radius:50%;background:#dc2626;animation:blink 0.8s infinite;}
+
+/* TRANSCRIPT */
+.ttbar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.wbadge{font-size:11px;font-family:'Geist Mono',monospace;color:var(--text-muted);background:var(--surface);padding:3px 10px;border-radius:999px;border:1px solid var(--border);}
+.tbox{width:100%;min-height:200px;background:var(--card-bg);border:none;color:var(--text);font-family:'Sora',sans-serif;font-size:14.5px;line-height:1.85;padding:16px;outline:none;resize:vertical;overflow-y:auto;transition:background 0.3s;}
+.tbox:empty::before{content:'Begin speaking to dictate your clinical note…';color:var(--text-muted);}
+.interim{color:var(--text-muted);font-style:italic;}
+.tactions{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);align-items:center;transition:background 0.3s;}
+
+/* BTNS */
+.btn{padding:8px 16px;border-radius:var(--rsm);font-size:13px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;border:none;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-p{background:var(--accent);color:white;box-shadow:0 2px 8px var(--accent-glow);}
+.btn-p:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px);}
+.btn-o{background:var(--card-bg);border:1.5px solid var(--border);color:var(--text-sub);}
+.btn-o:hover:not(:disabled){border-color:var(--border-strong);color:var(--text);}
+.btn-d{background:var(--card-bg);border:1.5px solid rgba(220,38,38,0.25);color:var(--red);}
+.btn-d:hover:not(:disabled){background:var(--red-l);}
+
+/* RIGHT SIDEBAR */
+.sidebar-r{display:flex;flex-direction:column;gap:14px;}
+.cfeed{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.citem{background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:7px 10px;font-size:12px;animation:fi 0.3s ease;}
+@keyframes fi{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.cf{color:var(--red);text-decoration:line-through;font-family:'Geist Mono',monospace;}
+.ca{color:var(--text-muted);margin:0 4px;}
+.ct{color:var(--green);font-weight:600;font-family:'Geist Mono',monospace;}
+.fempty,.lempty{font-size:12px;color:var(--text-muted);text-align:center;padding:14px 0;font-style:italic;}
+.nlist{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;}
+.nitem{border:1px solid var(--border);border-radius:var(--rsm);padding:10px 12px;background:var(--surface);animation:fi 0.3s ease;transition:border-color 0.2s;cursor:pointer;}
+.nitem:hover{border-color:var(--accent);}
+.ntop{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.npat{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.nbadge{font-size:10px;font-weight:600;background:var(--accent-l);color:var(--accent);padding:2px 7px;border-radius:999px;white-space:nowrap;}
+.nprev{font-size:11px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+.nmeta{display:flex;align-items:center;justify-content:space-between;}
+.ntime{font-size:10px;color:var(--text-muted);font-family:'Geist Mono',monospace;}
+.ndel{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:2px 5px;border-radius:4px;transition:all 0.2s;}
+.ndel:hover{color:var(--red);background:var(--red-l);}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);width:640px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;animation:pi 0.25s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes pi{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:none}}
+.mhd{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.mtitle{font-size:16px;font-weight:700;}
+.mclose{background:var(--surface);border:1px solid var(--border);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;color:var(--text-sub);display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.mclose:hover{background:var(--red-l);color:var(--red);}
+.mbody{padding:20px;overflow-y:auto;flex:1;}
+.mft{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
+.fnote{background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:16px;font-size:13.5px;line-height:1.85;color:var(--text);white-space:pre-wrap;max-height:420px;overflow-y:auto;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:var(--bg);padding:11px 22px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:9999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.nospeech{background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.25);border-radius:var(--rsm);padding:10px 12px;font-size:12px;color:var(--amber);display:none;margin-bottom:10px;}
+
+@media(max-width:1150px){.page{grid-template-columns:240px 1fr}.sidebar-r{display:none}}
+@media(max-width:720px){.page{grid-template-columns:1fr;padding:12px}.sidebar-l{display:none!important}}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-top">
+      <div class="auth-logo">
+        <svg width="32" height="32" viewBox="240 70 200 170" xmlns="http://www.w3.org/2000/svg">
+          <rect x="316" y="80" width="48" height="72" rx="24" fill="#1B6FE8"/>
+          <rect x="336" y="96" width="8" height="40" rx="2" fill="white" opacity="0.9"/>
+          <rect x="322" y="110" width="36" height="8" rx="2" fill="white" opacity="0.9"/>
+          <path d="M294 152 Q294 196 340 196 Q386 196 386 152" fill="none" stroke="#1B6FE8" stroke-width="5" stroke-linecap="round"/>
+          <line x1="340" y1="196" x2="340" y2="218" stroke="#1B6FE8" stroke-width="5" stroke-linecap="round"/>
+          <line x1="316" y1="218" x2="364" y2="218" stroke="#1B6FE8" stroke-width="5" stroke-linecap="round"/>
+          <path d="M272 138 Q264 152 272 166" fill="none" stroke="#34C4A4" stroke-width="4" stroke-linecap="round"/>
+          <path d="M408 138 Q416 152 408 166" fill="none" stroke="#34C4A4" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div class="auth-logo-name">Med<span>Voice</span></div>
+      </div>
+      <div class="auth-tagline">CLINICAL DICTATION · SIMPLIFIED</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSI" onclick="switchTab('si')">Sign In</button>
+        <button class="auth-tab" id="tabSU" onclick="switchTab('su')">Create Account</button>
+      </div>
+      <!-- Sign In -->
+      <form class="aform" id="fSI" onsubmit="doSignIn(event)">
+        <div class="aerr" id="errSI"></div>
+        <div class="af"><label>Email</label><input class="ai" type="email" id="siEmail" placeholder="you@email.com" required/></div>
+        <div class="af"><label>Password</label><input class="ai" type="password" id="siPass" placeholder="••••••••" required/></div>
+        <div class="aforgot"><button type="button" onclick="showReset()">Forgot password?</button></div>
+        <button class="abtn" type="submit" id="btnSI">Sign In</button>
+      </form>
+      <!-- Sign Up -->
+      <form class="aform hidden" id="fSU" onsubmit="doSignUp(event)">
+        <div class="aerr" id="errSU"></div>
+        <div class="asuc" id="sucSU"></div>
+        <div class="af"><label>Full Name</label><input class="ai" type="text" id="suName" placeholder="e.g. Sarah Johnson" required/></div>
+        <div class="af"><label>Role / Credentials</label><input class="ai" type="text" id="suRole" placeholder="e.g. FNP Student, APRN"/></div>
+        <div class="af"><label>Email</label><input class="ai" type="email" id="suEmail" placeholder="you@email.com" required/></div>
+        <div class="af"><label>Password</label><input class="ai" type="password" id="suPass" placeholder="Min 6 characters" required/></div>
+        <button class="abtn" type="submit" id="btnSU">Create Account</button>
+      </form>
+      <!-- Reset -->
+      <form class="aform hidden" id="fRE" onsubmit="doReset(event)">
+        <div class="aerr" id="errRE"></div>
+        <div class="asuc" id="sucRE"></div>
+        <div class="af"><label>Email</label><input class="ai" type="email" id="reEmail" placeholder="you@email.com" required/></div>
+        <button class="abtn" type="submit">Send Reset Email</button>
+        <div class="aback"><button type="button" onclick="switchTab('si')">← Back to Sign In</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app-screen" id="appScreen">
+  <nav>
+    <div class="nav-logo">
+      <svg width="28" height="28" viewBox="240 70 200 170" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;position:relative;top:1px;">
+        <rect x="316" y="80" width="48" height="72" rx="24" fill="#1B6FE8"/>
+        <rect x="336" y="96" width="8" height="40" rx="2" fill="white" opacity="0.9"/>
+        <rect x="322" y="110" width="36" height="8" rx="2" fill="white" opacity="0.9"/>
+        <path d="M294 152 Q294 196 340 196 Q386 196 386 152" fill="none" stroke="#1B6FE8" stroke-width="5" stroke-linecap="round"/>
+        <line x1="340" y1="196" x2="340" y2="218" stroke="#1B6FE8" stroke-width="5" stroke-linecap="round"/>
+        <line x1="316" y1="218" x2="364" y2="218" stroke="#1B6FE8" stroke-width="5" stroke-linecap="round"/>
+        <path d="M272 138 Q264 152 272 166" fill="none" stroke="#34C4A4" stroke-width="4" stroke-linecap="round"/>
+        <path d="M408 138 Q416 152 408 166" fill="none" stroke="#34C4A4" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <div class="logo-name">Med<span>Voice</span></div>
+    </div>
+    <div class="nav-right">
+      <button class="theme-btn" id="themeBtn" title="Toggle dark/light">🌙</button>
+      <div class="spill" id="bePill"><span class="sdot"></span><span id="beLabel">checking…</span></div>
+      <div class="spill" id="recPill"><span class="sdot"></span><span id="recLabel">READY</span></div>
+      <div class="umenu">
+        <button class="ubtn" id="uBtn" onclick="toggleUMenu()">
+          <div class="uav" id="uAv">?</div>
+          <span class="uname" id="uName">Account</span>
+          <span style="color:var(--text-muted);font-size:10px;">▾</span>
+        </button>
+        <div class="udrop" id="uDrop">
+          <div class="udrop-email" id="uEmail"></div>
+          <div class="udrop-item" onclick="togglePEdit()">✏️ Edit Profile</div>
+          <div class="udrop-item danger" onclick="doSignOut()">🚪 Sign Out</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page">
+    <aside class="sidebar-l" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">Provider</span>
+          <button class="btn btn-o" style="padding:4px 10px;font-size:11px;" onclick="togglePEdit()">✏️ Edit</button>
+        </div>
+        <div class="card-body">
+          <div class="prov-chip"><div class="pav" id="pAv">?</div><div><div class="pname" id="pName">Your Name</div><div class="prole" id="pRole">Provider</div></div></div>
+          <div class="pedit" id="pEdit">
+            <input class="pinput" id="pInName" placeholder="Full name e.g. Sarah Johnson"/>
+            <input class="pinput" id="pInRole" placeholder="Role e.g. FNP Student, APRN"/>
+            <input class="pinput" id="pInSchool" placeholder="School / Program (optional)"/>
+            <button class="psave" onclick="saveProvider()">Save Profile</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Patient Info</span></div>
+        <div class="card-body">
+          <div class="nospeech" id="noSpeech">⚠️ Use Chrome or Edge for voice.</div>
+          <div class="field"><label>Patient Name</label><input type="text" id="patName" placeholder="e.g. Jane Smith"/></div>
+          <div class="field"><label>Date of Visit</label><input type="date" id="visitDate"/></div>
+          <div class="field"><label>Chief Complaint</label><input type="text" id="chiefCC" placeholder="e.g. chest pain"/></div>
+          <div class="field"><label>Note Type</label>
+            <select id="noteType">
+              <option value="SOAP">SOAP Note</option>
+              <option value="PROGRESS">Progress Note</option>
+              <option value="DISCHARGE">Discharge Summary</option>
+              <option value="REFERRAL">Referral Letter</option>
+              <option value="PROCEDURE">Procedure Note</option>
+              <option value="ADMISSION">Admission Note</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Session</span></div>
+        <div class="card-body" style="padding:12px;">
+          <div class="sgrid">
+            <div class="sbox"><div class="snum" id="sW">0</div><div class="slbl">Words</div></div>
+            <div class="sbox"><div class="snum" id="sF">0</div><div class="slbl">Fixes</div></div>
+            <div class="sbox"><div class="snum" id="sN">0</div><div class="slbl">Saved</div></div>
+            <div class="sbox"><div class="snum" id="sT">0s</div><div class="slbl">Duration</div></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="center-col">
+      <div class="mic-card">
+        <button class="mic-btn" id="micBtn">🎙️</button>
+        <div style="flex:1;">
+          <div class="mic-head" id="micH">Ready to Dictate</div>
+          <div class="mic-sub" id="micS">Press the microphone and speak your clinical note</div>
+          <div class="waveform" id="waveform">
+            <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+            <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+            <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+            <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+            <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
+          </div>
+          <div class="recrow" id="recRow"><div class="recdot"></div>RECORDING — Click mic to stop</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ttbar"><span class="card-title">Raw Dictation</span><span class="wbadge" id="wCount">0 words</span></div>
+        <div class="tbox" id="transcript" contenteditable="true" spellcheck="true"></div>
+        <div class="tactions">
+          <button class="btn btn-p" id="saveBtn">💾 Save &amp; Format Note</button>
+          <button class="btn btn-o" id="copyBtn">📋 Copy</button>
+          <button class="btn btn-d" id="clearBtn">🗑 Clear</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar-r">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Auto-Corrections</span></div>
+        <div class="card-body" style="padding:12px;"><div class="cfeed" id="cFeed"><div class="fempty">No corrections yet</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Saved Notes</span><span class="wbadge" id="nCount">0</span></div>
+        <div class="card-body" style="padding:12px;"><div class="nlist" id="nList"><div class="lempty">No saved notes yet</div></div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mhd"><div class="mtitle" id="mTitle">📋 Formatted Note</div><button class="mclose" id="mClose">✕</button></div>
+    <div class="mbody"><div class="fnote" id="fNote"></div></div>
+    <div class="mft"><button class="btn btn-o" id="mCancel">Cancel</button><button class="btn btn-p" id="confirmSave">✅ Confirm &amp; Save</button></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+// IMPORTANT: After Railway deploy, change this to your Railway URL
+// e.g. const API = 'https://medvoice-production.up.railway.app';
+const API = 'https://web-production-0a965.up.railway.app';
+
+// ── THEME ──
+let dark = localStorage.getItem('mv_theme')==='dark';
+const applyTheme=()=>{document.documentElement.setAttribute('data-theme',dark?'dark':'light');document.getElementById('themeBtn').textContent=dark?'☀️':'🌙';};
+applyTheme();
+document.getElementById('themeBtn').addEventListener('click',()=>{dark=!dark;localStorage.setItem('mv_theme',dark?'dark':'light');applyTheme();});
+
+// ── AUTH STATE ──
+let token=localStorage.getItem('mv_tok')||null;
+let user=JSON.parse(localStorage.getItem('mv_usr')||'null');
+
+function switchTab(t){
+  document.getElementById('tabSI').classList.toggle('active',t==='si');
+  document.getElementById('tabSU').classList.toggle('active',t==='su');
+  document.getElementById('fSI').classList.toggle('hidden',t!=='si');
+  document.getElementById('fSU').classList.toggle('hidden',t!=='su');
+  document.getElementById('fRE').classList.add('hidden');
+}
+function showReset(){document.getElementById('fSI').classList.add('hidden');document.getElementById('fSU').classList.add('hidden');document.getElementById('fRE').classList.remove('hidden');document.getElementById('tabSI').classList.remove('active');document.getElementById('tabSU').classList.remove('active');}
+
+async function doSignIn(e){
+  e.preventDefault();
+  const btn=document.getElementById('btnSI'),err=document.getElementById('errSI');
+  btn.disabled=true;btn.textContent='Signing in…';err.style.display='none';
+  try{
+    const r=await fetch(API+'/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('siEmail').value,password:document.getElementById('siPass').value})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Sign in failed');
+    token=d.access_token;user=d.user;
+    localStorage.setItem('mv_tok',token);localStorage.setItem('mv_usr',JSON.stringify(user));
+    enterApp();
+  }catch(ex){err.textContent=ex.message;err.style.display='block';}
+  btn.disabled=false;btn.textContent='Sign In';
+}
+
+async function doSignUp(e){
+  e.preventDefault();
+  const btn=document.getElementById('btnSU'),err=document.getElementById('errSU'),suc=document.getElementById('sucSU');
+  btn.disabled=true;btn.textContent='Creating account…';err.style.display='none';suc.style.display='none';
+  try{
+    const email=document.getElementById('suEmail').value;
+    const password=document.getElementById('suPass').value;
+    const r=await fetch(API+'/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,name:document.getElementById('suName').value,role:document.getElementById('suRole').value})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Signup failed');
+    // Auto sign in immediately after account creation
+    const r2=await fetch(API+'/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d2=await r2.json();
+    if(r2.ok&&d2.access_token){token=d2.access_token;user=d2.user;localStorage.setItem('mv_tok',token);localStorage.setItem('mv_usr',JSON.stringify(user));enterApp();return;}
+    // If auto-login fails (email confirmation still on), show message
+    suc.textContent='✅ Account created! Sign in with your credentials.';suc.style.display='block';
+    setTimeout(()=>switchTab('si'),2000);
+  }catch(ex){err.textContent=ex.message;err.style.display='block';}
+  btn.disabled=false;btn.textContent='Create Account';
+}
+
+async function doReset(e){
+  e.preventDefault();
+  const err=document.getElementById('errRE'),suc=document.getElementById('sucRE');
+  err.style.display='none';suc.style.display='none';
+  try{await fetch(API+'/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('reEmail').value})});suc.textContent='✅ If that email exists, a reset link has been sent.';suc.style.display='block';}
+  catch{err.textContent='Error sending email.';err.style.display='block';}
+}
+
+async function doSignOut(){
+  try{await fetch(API+'/auth/signout',{method:'POST',headers:{Authorization:'Bearer '+token}});}catch{}
+  token=null;user=null;localStorage.removeItem('mv_tok');localStorage.removeItem('mv_usr');
+  document.getElementById('appScreen').classList.remove('visible');
+  document.getElementById('authScreen').style.display='flex';
+  showToast('👋 Signed out');
+}
+
+function enterApp(){
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appScreen').classList.add('visible');
+  const meta=user?.user_metadata||{};
+  const name=meta.name||user?.email?.split('@')[0]||'User';
+  const role=meta.role||'';
+  const initials=n=>n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('uAv').textContent=initials(name);
+  document.getElementById('uName').textContent=name;
+  document.getElementById('uEmail').textContent=user?.email||'';
+  const saved=JSON.parse(localStorage.getItem('mv_prov')||'{}');
+  loadProvider(saved.name||name,saved.role||role,saved.school||'');
+  checkBackend();loadNotes();
+}
+
+if(token&&user){enterApp();}
+
+// ── USER MENU ──
+function toggleUMenu(){document.getElementById('uDrop').classList.toggle('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.umenu'))document.getElementById('uDrop').classList.remove('open');});
+
+// ── PROVIDER ──
+function loadProvider(name,role,school){
+  const ini=n=>n?n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
+  document.getElementById('pName').textContent=name||'Your Name';
+  document.getElementById('pRole').textContent=(role||'Provider')+(school?' · '+school:'');
+  document.getElementById('pAv').textContent=ini(name);
+  document.getElementById('uAv').textContent=ini(name);
+  document.getElementById('uName').textContent=name||'Account';
+  document.getElementById('pInName').value=name||'';
+  document.getElementById('pInRole').value=role||'';
+  document.getElementById('pInSchool').value=school||'';
+}
+function togglePEdit(){document.getElementById('pEdit').classList.toggle('open');document.getElementById('uDrop').classList.remove('open');}
+function saveProvider(){
+  const n=document.getElementById('pInName').value.trim()||'Your Name';
+  const r=document.getElementById('pInRole').value.trim()||'Provider';
+  const s=document.getElementById('pInSchool').value.trim();
+  localStorage.setItem('mv_prov',JSON.stringify({name:n,role:r,school:s}));
+  loadProvider(n,r,s);document.getElementById('pEdit').classList.remove('open');showToast('✅ Profile saved!');
+}
+
+// ── MEDICAL DICTIONARY ──
+const MED={"mycardio infraction":"myocardial infarction","mycardial infraction":"myocardial infarction","myocardio infraction":"myocardial infarction","tack ycardia":"tachycardia","tachy cardia":"tachycardia","tachycarida":"tachycardia","brady cardia":"bradycardia","hyper tension":"hypertension","hypo tension":"hypotension","atrial fib":"atrial fibrillation","a fib":"atrial fibrillation","c h f":"CHF","numonia":"pneumonia","new monia":"pneumonia","bronkitis":"bronchitis","c o p d":"COPD","dys pnea":"dyspnea","dyspnia":"dyspnea","alter mental status":"altered mental status","c v a":"CVA","transient ischemic attack":"TIA","t i a":"TIA","seisure":"seizure","migrene":"migraine","die a betes":"diabetes","diabeetus":"diabetes","hyper glycemia":"hyperglycemia","hypo glycemia":"hypoglycemia","d k a":"DKA","thigh roid":"thyroid","app and itis":"appendicitis","appendicitus":"appendicitis","u t i":"UTI","osteoporsis":"osteoporosis","amo xicillin":"amoxicillin","milligrams":"mg","milli grams":"mg","milli liters":"mL","twice daily":"BID","three times daily":"TID","four times daily":"QID","as needed":"PRN","by mouth":"PO","intravenously":"IV","intramuscularly":"IM","follow up":"follow-up","oxygen saturation":"O2 saturation"};
+function applyCorr(text){let r=text;const ap=[];const keys=Object.keys(MED).sort((a,b)=>b.length-a.length);for(const k of keys){const rx=new RegExp('\\b'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');if(rx.test(r)){const m=r.match(rx)?.[0];const c=MED[k];if(m&&m.toLowerCase()!==c.toLowerCase())ap.push({from:m,to:c});r=r.replace(rx,c);}}return{text:r,corrections:ap};}
+
+// ── NOTE FORMATTER ──
+function formatNote(raw,nt,patient,cc,prov){
+  const orig=raw;const date=document.getElementById('visitDate').value||new Date().toLocaleDateString();
+  function ex(kws){const ss=orig.split(/(?<=[.!?])\s+|(?<=\n)/);for(const k of kws){const f=ss.filter(s=>s.toLowerCase().includes(k));if(f.length)return f.join(' ').trim();}return '';}
+  const hdr=`Patient: ${patient||'Unknown'}\nDate: ${date}\nProvider: ${prov||'Provider'}\n\n`;
+  if(nt==='SOAP')return hdr+`SUBJECTIVE\n${[cc?`Chief Complaint: ${cc}`:'',ex(['complain','presents with','reports','states','pain','symptoms'])].filter(Boolean).join('\n')||orig}\n\nOBJECTIVE\n${ex(['vitals','blood pressure','bp','heart rate','temp','o2','exam','lungs','abdomen'])||'Physical examination findings not specified.'}\n\nASSESSMENT\n${ex(['diagnosis','assessment','impression','consistent with'])||'Assessment not specified.'}\n\nPLAN\n${ex(['plan','prescribe','start','continue','refer','follow','order','lab'])||'Plan not specified.'}`;
+  if(nt==='PROGRESS')return hdr+`INTERVAL HISTORY\n${ex(['since last','follow up','interval'])||orig}\n\nPHYSICAL EXAMINATION\n${ex(['exam','vitals','bp','heart rate','lungs'])||'Not specified.'}\n\nASSESSMENT\n${ex(['assessment','diagnosis','impression'])||'Not specified.'}\n\nPLAN\n${ex(['plan','prescribe','continue','refer'])||'Not specified.'}`;
+  if(nt==='DISCHARGE')return hdr+`ADMISSION DIAGNOSIS\n${ex(['admitted','diagnosis'])||cc||'Not specified.'}\n\nHOSPITAL COURSE\n${ex(['course','treatment','improved'])||orig}\n\nDISCHARGE CONDITION\nStable.\n\nDISCHARGE MEDICATIONS\n${ex(['discharge med','prescribe'])||'See medication list.'}\n\nFOLLOW-UP\n${ex(['follow up','return','appointment'])||'Follow up with PCP as directed.'}`;
+  if(nt==='REFERRAL')return hdr+`REASON FOR REFERRAL\n${cc||'See clinical details.'}\n\nCLINICAL HISTORY\n${orig}\n\nREQUEST\nPlease evaluate and manage as clinically appropriate. Thank you.`;
+  if(nt==='PROCEDURE')return hdr+`PROCEDURE\n${cc||ex(['procedure','performed'])||'See details.'}\n\nINDICATION\n${ex(['indication','reason','due to'])||'See history.'}\n\nTECHNIQUE\n${ex(['technique','approach','sterile'])||orig}\n\nFINDINGS\n${ex(['finding','revealed','showed'])||'See documentation.'}\n\nCOMPLICATIONS\n${ex(['complication','tolerated'])||'No complications. Patient tolerated procedure well.'}`;
+  if(nt==='ADMISSION')return hdr+`CHIEF COMPLAINT\n${cc||ex(['chief complaint','presents with'])||'Not specified.'}\n\nHISTORY OF PRESENT ILLNESS\n${ex(['history','hpi','presents','reports','onset'])||orig}\n\nPAST MEDICAL HISTORY\n${ex(['past medical','pmh'])||'Not documented.'}\n\nMEDICATIONS\n${ex(['medication','taking','prescribed'])||'Not documented.'}\n\nALLERGIES\n${ex(['allerg','nkda'])||'NKDA.'}\n\nPHYSICAL EXAMINATION\n${ex(['exam','vitals','bp','lungs'])||'See examination.'}\n\nASSESSMENT AND PLAN\n${ex(['assessment','plan','diagnosis','prescribe'])||'To follow.'}`;
+  return hdr+orig;
+}
+
+// ── SPEECH ──
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recog=null,isRec=false,finalTxt='',fixCnt=0,recStart=null,recTmr=null,savedNotes=[],pendingNote=null;
+const $=id=>document.getElementById(id);
+$('visitDate').value=new Date().toISOString().split('T')[0];
+if(!SR)$('noSpeech').style.display='block';
+const aH=()=>token?{Authorization:'Bearer '+token,'Content-Type':'application/json'}:{'Content-Type':'application/json'};
+
+async function checkBackend(){try{const r=await fetch(API+'/health',{signal:AbortSignal.timeout(3000)});if(r.ok){$('bePill').className='spill ok';$('beLabel').textContent='backend online';}else throw 0;}catch{$('bePill').className='spill';$('beLabel').textContent='backend offline';}}
+async function loadNotes(){try{const r=await fetch(API+'/notes',{headers:aH()});if(r.ok){savedNotes=await r.json();renderNotes();$('sN').textContent=savedNotes.length;}}catch{}}
+
+function buildRec(){
+  const r=new SR();r.continuous=true;r.interimResults=true;r.lang='en-US';
+  r.onstart=()=>{isRec=true;$('micBtn').classList.add('recording');$('micBtn').textContent='⏹';$('micH').textContent='Listening…';$('micS').textContent='Speak clearly — medical terms auto-corrected';$('waveform').classList.add('active');$('recRow').classList.add('show');$('recPill').className='spill live';$('recLabel').textContent='● REC';recStart=Date.now();recTmr=setInterval(()=>{const s=Math.floor((Date.now()-recStart)/1000);$('sT').textContent=s<60?s+'s':Math.floor(s/60)+'m'+(s%60)+'s';},1000);};
+  r.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){const{text,corrections}=applyCorr(e.results[i][0].transcript);finalTxt+=text+' ';if(corrections.length){fixCnt+=corrections.length;$('sF').textContent=fixCnt;corrections.forEach(addCorrUI);}}else interim=e.results[i][0].transcript;}$('transcript').innerHTML=finalTxt+(interim?`<span class="interim">${interim}`:'');updateWC();$('transcript').scrollTop=$('transcript').scrollHeight;};
+  r.onerror=e=>{if(e.error==='not-allowed')showToast('⚠️ Mic access denied.');stopRec();};
+  r.onend=()=>{if(isRec){try{r.start();}catch(e){}}else stopRec();};
+  return r;
+}
+function stopRec(){isRec=false;if(recog){try{recog.stop();}catch(e){}}$('micBtn').classList.remove('recording');$('micBtn').textContent='🎙️';$('micH').textContent='Ready to Dictate';$('micS').textContent='Press the microphone and speak your clinical note';$('waveform').classList.remove('active');$('recRow').classList.remove('show');$('recPill').className='spill';$('recLabel').textContent='READY';clearInterval(recTmr);}
+$('micBtn').addEventListener('click',()=>{if(!SR)return;if(isRec){isRec=false;if(recog)recog.stop();}else{finalTxt=$('transcript').innerText.replace(/\s+/g,' ').trim();if(finalTxt)finalTxt+=' ';recog=buildRec();try{recog.start();}catch(e){showToast('⚠️ Could not start mic.');}}});
+function updateWC(){const t=$('transcript').innerText.trim();const n=t?t.split(/\s+/).length:0;$('wCount').textContent=n+(n===1?' word':' words');$('sW').textContent=n;}
+$('transcript').addEventListener('input',updateWC);
+function addCorrUI({from,to}){const e=$('cFeed').querySelector('.fempty');if(e)e.remove();const el=document.createElement('div');el.className='citem';el.innerHTML=`<span class="cf">${esc(from)}</span><span class="ca">→</span><span class="ct">${esc(to)}</span>`;$('cFeed').prepend(el);const items=$('cFeed').querySelectorAll('.citem');if(items.length>8)items[items.length-1].remove();}
+
+// ── SAVE ──
+$('saveBtn').addEventListener('click',()=>{
+  const raw=$('transcript').innerText.trim();if(!raw){showToast('Nothing to save yet.');return;}
+  const patient=$('patName').value||'Unknown Patient';
+  const nt=$('noteType').value;
+  const ntl=$('noteType').options[$('noteType').selectedIndex].text;
+  const cc=$('chiefCC').value;
+  const prov=JSON.parse(localStorage.getItem('mv_prov')||'{}');
+  const formatted=formatNote(raw,nt,patient,cc,prov.name||'Provider');
+  pendingNote={patient,note_type:ntl,date:$('visitDate').value,raw_text:raw,formatted,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+  $('mTitle').textContent=`📋 ${ntl} — ${patient}`;
+  $('fNote').textContent=formatted;
+  $('confirmSave').style.display='';
+  $('overlay').classList.add('open');
+});
+
+$('confirmSave').addEventListener('click',async()=>{
+  if(!pendingNote)return;
+  $('confirmSave').disabled=true;$('confirmSave').textContent='Saving…';
+  let saved=false;
+  try{const r=await fetch(API+'/notes',{method:'POST',headers:aH(),body:JSON.stringify(pendingNote)});if(r.ok){const d=await r.json();pendingNote.id=d.id;saved=true;}}catch{}
+  if(!saved){pendingNote.id=Date.now();const loc=JSON.parse(localStorage.getItem('mv_local')||'[]');loc.unshift(pendingNote);localStorage.setItem('mv_local',JSON.stringify(loc.slice(0,50)));}
+  savedNotes.unshift(pendingNote);renderNotes();$('sN').textContent=savedNotes.length;
+  $('overlay').classList.remove('open');$('confirmSave').disabled=false;$('confirmSave').textContent='✅ Confirm & Save';
+  showToast(saved?'✅ Saved to Supabase!':'💾 Saved locally (backend offline)');pendingNote=null;
+});
+
+$('copyBtn').addEventListener('click',()=>{const t=$('transcript').innerText.trim();if(!t){showToast('Nothing to copy.');return;}navigator.clipboard.writeText(t).then(()=>showToast('📋 Copied!')).catch(()=>showToast('Select text manually.'));});
+$('clearBtn').addEventListener('click',()=>{if(!$('transcript').innerText.trim())return;if(confirm('Clear the current note?')){$('transcript').innerHTML='';finalTxt='';updateWC();if(isRec)stopRec();fixCnt=0;$('sF').textContent=0;$('sT').textContent='0s';}});
+
+// ── NOTES ──
+function renderNotes(){
+  $('nCount').textContent=savedNotes.length;
+  if(!savedNotes.length){$('nList').innerHTML='<div class="lempty">No saved notes yet</div>';return;}
+  $('nList').innerHTML=savedNotes.map(n=>`<div class="nitem" onclick="viewNote('${n.id}')"><div class="ntop"><span class="npat">${esc(n.patient)}</span><span class="nbadge">${esc(n.note_type||n.type||'')}</span></div><div class="nprev">${esc((n.formatted||n.raw_text||'').replace(/\n/g,' '))}</div><div class="nmeta"><span class="ntime">${esc(n.date||'')} · ${esc(n.time||'')}</span><button class="ndel" onclick="event.stopPropagation();delNote('${n.id}')">✕</button></div></div>`).join('');
+}
+function viewNote(id){const n=savedNotes.find(x=>String(x.id)===String(id));if(!n)return;$('mTitle').textContent=`📋 ${n.note_type||n.type||'Note'} — ${n.patient}`;$('fNote').textContent=n.formatted||n.raw_text||'';$('confirmSave').style.display='none';$('overlay').classList.add('open');}
+async function delNote(id){try{await fetch(API+'/notes/'+id,{method:'DELETE',headers:aH()});}catch{}savedNotes=savedNotes.filter(n=>String(n.id)!==String(id));renderNotes();$('sN').textContent=savedNotes.length;showToast('🗑 Deleted.');}
+
+['mClose','mCancel'].forEach(id=>{$(id).addEventListener('click',()=>{$('overlay').classList.remove('open');$('confirmSave').style.display='';});});
+$('overlay').addEventListener('click',e=>{if(e.target===$('overlay')){$('overlay').classList.remove('open');$('confirmSave').style.display='';}});
+
+let toastT;
+function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+(function(){const loc=JSON.parse(localStorage.getItem('mv_local')||'[]');if(loc.length&&!savedNotes.length){savedNotes=loc;renderNotes();}})();
+</script>
+</body>
+</html>
