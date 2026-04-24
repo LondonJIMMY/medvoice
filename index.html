@@ -211,6 +211,30 @@ body{padding-bottom:env(safe-area-inset-bottom);}
   nav{padding-top:env(safe-area-inset-top);}
   .auth-screen{padding-top:env(safe-area-inset-top);}
 }
+@media(max-width:600px){
+nav{padding:0 12px;height:52px;}
+.spill#bePill{display:none;}
+.spill#recPill{padding:3px 8px;font-size:10px;}
+.logo-name{font-size:15px;}
+.uname{display:none;}
+.theme-btn{width:28px;height:28px;font-size:12px;}
+.page{grid-template-columns:1fr;padding:10px;gap:10px;}
+.sidebar-l,.sidebar-r{display:none!important;}
+.mic-card{padding:20px 16px;gap:14px;}
+.mic-btn{width:80px;height:80px;font-size:30px;flex-shrink:0;}
+.mic-head{font-size:18px;}
+.mic-sub{font-size:12px;}
+.tbox{min-height:160px;font-size:15px;}
+.tactions{flex-direction:column;gap:8px;padding:12px;}
+.tactions .btn{width:100%;justify-content:center;padding:14px;font-size:15px;border-radius:12px;}
+.overlay.open{align-items:flex-end;}
+.modal{width:100vw;max-width:100vw;border-radius:20px 20px 0 0;}
+.toast{bottom:calc(20px + env(safe-area-inset-bottom));}
+body{padding-bottom:env(safe-area-inset-bottom);}
+}
+@media(display-mode:standalone){
+nav{padding-top:env(safe-area-inset-top);height:calc(52px + env(safe-area-inset-top));}
+}
 </style>
 </head>
 <body>
