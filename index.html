@@ -2,8 +2,23 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>MedVoice — Clinical Dictation</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#2563eb"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MedVoice"/>
+<link rel="apple-touch-icon" href="icons/icon-180.png"/>
+
+<!-- SEO / social -->
+<meta name="description" content="AI-powered clinical dictation for healthcare professionals"/>
+<meta name="application-name" content="MedVoice"/>
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='240 70 200 170' xmlns='http://www.w3.org/2000/svg'><rect x='316' y='80' width='48' height='72' rx='24' fill='%231B6FE8'/><rect x='336' y='96' width='8' height='40' rx='2' fill='white' opacity='0.9'/><rect x='322' y='110' width='36' height='8' rx='2' fill='white' opacity='0.9'/><path d='M294 152 Q294 196 340 196 Q386 196 386 152' fill='none' stroke='%231B6FE8' stroke-width='5' stroke-linecap='round'/><line x1='340' y1='196' x2='340' y2='218' stroke='%231B6FE8' stroke-width='5' stroke-linecap='round'/><line x1='316' y1='218' x2='364' y2='218' stroke='%231B6FE8' stroke-width='5' stroke-linecap='round'/><path d='M272 138 Q264 152 272 166' fill='none' stroke='%2334C4A4' stroke-width='4' stroke-linecap='round'/><path d='M408 138 Q416 152 408 166' fill='none' stroke='%2334C4A4' stroke-width='4' stroke-linecap='round'/></svg>"/>
 <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
@@ -186,6 +201,16 @@ nav{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 28p
 
 @media(max-width:1150px){.page{grid-template-columns:240px 1fr}.sidebar-r{display:none}}
 @media(max-width:720px){.page{grid-template-columns:1fr;padding:12px}.sidebar-l{display:none!important}}
+
+/* iPhone safe area (notch + home bar) */
+nav{padding-left:max(28px,env(safe-area-inset-left));padding-right:max(28px,env(safe-area-inset-right));}
+body{padding-bottom:env(safe-area-inset-bottom);}
+
+/* PWA standalone mode tweaks */
+@media(display-mode:standalone){
+  nav{padding-top:env(safe-area-inset-top);}
+  .auth-screen{padding-top:env(safe-area-inset-top);}
+}
 </style>
 </head>
 <body>
@@ -598,6 +623,88 @@ let toastT;
 function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 (function(){const loc=JSON.parse(localStorage.getItem('mv_local')||'[]');if(loc.length&&!savedNotes.length){savedNotes=loc;renderNotes();}})();
+
+// ── Service Worker ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(r=>{
+      console.log('[MedVoice] SW registered',r.scope);
+    }).catch(e=>console.warn('[MedVoice] SW failed',e));
+  });
+}
+
+// ── Install prompt (Android Chrome) ──
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  // Show install banner after 3s if not already installed
+  setTimeout(()=>{
+    if(deferredPrompt && $('authScreen').style.display!=='none' || document.querySelector('.app-screen.visible')){
+      showInstallBanner();
+    }
+  },3000);
+});
+window.addEventListener('appinstalled',()=>{
+  deferredPrompt=null;
+  const b=document.getElementById('installBanner');
+  if(b)b.remove();
+});
+
+function showInstallBanner(){
+  if(document.getElementById('installBanner'))return;
+  const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+  if(isStandalone)return;
+
+  const banner=document.createElement('div');
+  banner.id='installBanner';
+  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#1b2840;border-top:1px solid rgba(255,255,255,0.12);padding:14px 16px 18px;display:flex;align-items:center;gap:12px;z-index:9999;animation:slideUp 0.3s ease;';
+
+  if(isIOS){
+    banner.innerHTML=`
+      <div style="flex:1;font-size:13px;color:#e6edf3;line-height:1.4;">
+        <strong style="color:#fff;display:block;margin-bottom:2px;">Install MedVoice</strong>
+        Tap <span style="background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:4px;">Share</span> then <em>Add to Home Screen</em>
+      </div>
+      <button onclick="document.getElementById('installBanner').remove()" style="background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer;line-height:1;padding:4px;">×</button>`;
+  } else {
+    banner.innerHTML=`
+      <div style="width:36px;height:36px;background:#2563eb;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="240 70 200 170" xmlns="http://www.w3.org/2000/svg"><rect x="316" y="80" width="48" height="72" rx="24" fill="white"/><path d="M294 152 Q294 196 340 196 Q386 196 386 152" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"/><line x1="340" y1="196" x2="340" y2="218" stroke="white" stroke-width="5" stroke-linecap="round"/><line x1="316" y1="218" x2="364" y2="218" stroke="white" stroke-width="5" stroke-linecap="round"/></svg>
+      </div>
+      <div style="flex:1;font-size:13px;color:#e6edf3;line-height:1.4;">
+        <strong style="color:#fff;display:block;margin-bottom:2px;">Install MedVoice</strong>
+        Add to your home screen for quick access
+      </div>
+      <button onclick="installApp()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">Install</button>
+      <button onclick="document.getElementById('installBanner').remove()" style="background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer;line-height:1;padding:4px;">×</button>`;
+  }
+
+  const style=document.createElement('style');
+  style.textContent='@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}';
+  document.head.appendChild(style);
+  document.body.appendChild(banner);
+}
+
+function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r=>{
+    deferredPrompt=null;
+    const b=document.getElementById('installBanner');
+    if(b)b.remove();
+  });
+}
+
+// Show iOS banner after login
+document.addEventListener('DOMContentLoaded',()=>{
+  const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+  if(isIOS&&!isStandalone){
+    setTimeout(showInstallBanner,4000);
+  }
+});
 </script>
 </body>
 </html>
