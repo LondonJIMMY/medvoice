@@ -380,8 +380,8 @@ nav{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 28p
 <script>
 // ── CONFIG ──
 // IMPORTANT: After Railway deploy, change this to your Railway URL
-// e.g. const API = 'https://medvoice-production.up.railway.app';
-const API = 'https://alice-wisdom-tribune-induction.trycloudflare.com';
+// e.g. const API = 'https://expand-lets-fellowship-traditional.trycloudflare.com';
+const API = 'https://expand-lets-fellowship-traditional.trycloudflare.com';
 const SUPA_URL = 'https://gpfwrseiwjikgnlqgyra.supabase.co';
 const SUPA_KEY = 'sb_publishable_WS4Dvn2WEgjbTC3Pvfvabg_RV0av3HS';
 const SH = {'Content-Type':'application/json','apikey':SUPA_KEY};
@@ -533,7 +533,16 @@ function buildRec(){
   const r=new SR();r.continuous=true;r.interimResults=true;r.lang='en-US';
   r.onstart=()=>{isRec=true;$('micBtn').classList.add('recording');$('micBtn').textContent='⏹';$('micH').textContent='Listening…';$('micS').textContent='Speak clearly — medical terms auto-corrected';$('waveform').classList.add('active');$('recRow').classList.add('show');$('recPill').className='spill live';$('recLabel').textContent='● REC';recStart=Date.now();recTmr=setInterval(()=>{const s=Math.floor((Date.now()-recStart)/1000);$('sT').textContent=s<60?s+'s':Math.floor(s/60)+'m'+(s%60)+'s';},1000);};
   r.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){const{text,corrections}=applyCorr(e.results[i][0].transcript);finalTxt+=text+' ';if(corrections.length){fixCnt+=corrections.length;$('sF').textContent=fixCnt;corrections.forEach(addCorrUI);}}else interim=e.results[i][0].transcript;}$('transcript').innerHTML=finalTxt+(interim?`<span class="interim">${interim}`:'');updateWC();$('transcript').scrollTop=$('transcript').scrollHeight;};
-  r.onerror=e=>{if(e.error==='not-allowed')showToast('⚠️ Mic access denied.');stopRec();};
+  r.onerror=e=>{
+    if(e.error==='not-allowed'){showToast('⚠️ Mic access denied — check browser settings.');stopRec();return;}
+    if(e.error==='network'){showToast('⚠️ Network error — check connection.');stopRec();return;}
+    // For aborted/no-speech errors, just restart silently
+    if(e.error==='aborted'||e.error==='no-speech'){
+      if(isRec){setTimeout(()=>{if(isRec){try{recog=buildRec();recog.start();}catch(e2){}}},200);}
+      return;
+    }
+    stopRec();
+  };
   r.onend=()=>{if(isRec){try{r.start();}catch(e){}}else stopRec();};
   return r;
 }
