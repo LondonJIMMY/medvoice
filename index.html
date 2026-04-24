@@ -654,6 +654,7 @@ async function doSignIn(e){
     if(!r.ok)throw new Error(d.error_description||d.msg||'Invalid email or password');
     token=d.access_token;user=d.user;
     localStorage.setItem('mv_tok',token);localStorage.setItem('mv_usr',JSON.stringify(user));
+    if(d.refresh_token)localStorage.setItem('mv_ref',d.refresh_token);
     enterApp();
   }catch(ex){err.textContent=ex.message;err.style.display='block';}
   btn.disabled=false;btn.textContent='Sign In';
@@ -710,6 +711,9 @@ function enterApp(){
   const saved=JSON.parse(localStorage.getItem('mv_prov')||'{}');
   loadProvider(saved.name||name,saved.role||role,saved.school||'');
   checkBackend();loadNotes();
+  // show mobile bar + start sync
+  if(typeof setupMobileBar==='function')setupMobileBar();
+  if(typeof startSync==='function')startSync();
 }
 
 if(token&&user){enterApp();}
@@ -766,7 +770,17 @@ if(!SR)$('noSpeech').style.display='block';
 const aH=()=>token?{Authorization:'Bearer '+token,'Content-Type':'application/json'}:{'Content-Type':'application/json'};
 
 async function checkBackend(){try{const r=await fetch(API+'/health',{signal:AbortSignal.timeout(3000)});if(r.ok){$('bePill').className='spill ok';$('beLabel').textContent='backend online';}else throw 0;}catch{$('bePill').className='spill';$('beLabel').textContent='backend offline';}}
-async function loadNotes(){try{const r=await fetch(API+'/notes',{headers:aH()});if(r.ok){savedNotes=await r.json();renderNotes();$('sN').textContent=savedNotes.length;}}catch{}}
+async function loadNotes(){
+  // Refresh token if expired
+  try{
+    const ref=localStorage.getItem('mv_ref');
+    if(ref){
+      const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:SH,body:JSON.stringify({refresh_token:ref})});
+      if(r.ok){const d=await r.json();if(d.access_token){token=d.access_token;localStorage.setItem('mv_tok',token);if(d.refresh_token)localStorage.setItem('mv_ref',d.refresh_token);}}
+    }
+  }catch{}
+  try{const r=await fetch(API+'/notes',{headers:aH()});if(r.ok){savedNotes=await r.json();renderNotes();$('sN').textContent=savedNotes.length;}}catch{}
+}
 
 function buildRec(){
   const r=new SR();r.continuous=true;r.interimResults=true;r.lang='en-US';
@@ -826,6 +840,10 @@ function renderNotes(){
   $('nCount').textContent=savedNotes.length;
   if(!savedNotes.length){$('nList').innerHTML='<div class="lempty">No saved notes yet</div>';return;}
   $('nList').innerHTML=savedNotes.map(n=>`<div class="nitem" onclick="viewNote('${n.id}')"><div class="ntop"><span class="npat">${esc(n.patient)}</span><span class="nbadge">${esc(n.note_type||n.type||'')}</span></div><div class="nprev">${esc((n.formatted||n.raw_text||'').replace(/\n/g,' '))}</div><div class="nmeta"><span class="ntime">${esc(n.date||'')} · ${esc(n.time||'')}</span><button class="ndel" onclick="event.stopPropagation();delNote('${n.id}')">✕</button></div></div>`).join('');
+  // sync mobile drawer
+  if(typeof syncMobileNotes==='function')syncMobileNotes();
+  const cnt=document.getElementById('mobileNoteCount');
+  if(cnt)cnt.textContent=savedNotes.length;
 }
 function viewNote(id){const n=savedNotes.find(x=>String(x.id)===String(id));if(!n)return;$('mTitle').textContent=`📋 ${n.note_type||n.type||'Note'} — ${n.patient}`;$('fNote').textContent=n.formatted||n.raw_text||'';$('confirmSave').style.display='none';$('overlay').classList.add('open');}
 async function delNote(id){try{await fetch(API+'/notes/'+id,{method:'DELETE',headers:aH()});}catch{}savedNotes=savedNotes.filter(n=>String(n.id)!==String(id));renderNotes();$('sN').textContent=savedNotes.length;showToast('🗑 Deleted.');}
@@ -909,10 +927,8 @@ function syncMobileNotes(){
   if(cnt)cnt.textContent=savedNotes.length;
 }
 
-// Patch renderNotes to also update mobile
-const _origRender=window.renderNotes;
-function renderNotes(){
-  if(_origRender)_origRender();
+// Mobile sync — called after every renderNotes
+function renderNotesMobileSync(){
   syncMobileNotes();
   const cnt=document.getElementById('mobileNoteCount');
   if(cnt)cnt.textContent=savedNotes.length;
@@ -939,20 +955,6 @@ function startSync(){
   },30000);
 }
 function stopSync(){if(syncInterval){clearInterval(syncInterval);syncInterval=null;}}
-
-// Start sync after login — hook into existing loadNotes
-const _origLoad=window.loadNotes;
-async function loadNotes(){
-  if(_origLoad)await _origLoad();
-  syncMobileNotes();
-  startSync();
-}
-// Stop when signed out
-const _origOut=window.doSignOut;
-async function doSignOut(){
-  stopSync();
-  if(_origOut)await _origOut();
-}
 
 // ── Service Worker ──
 if('serviceWorker' in navigator){
