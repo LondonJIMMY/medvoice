@@ -711,9 +711,7 @@ function enterApp(){
   const saved=JSON.parse(localStorage.getItem('mv_prov')||'{}');
   loadProvider(saved.name||name,saved.role||role,saved.school||'');
   checkBackend();loadNotes();
-  // show mobile bar + start sync
-  if(typeof setupMobileBar==='function')setupMobileBar();
-  if(typeof startSync==='function')startSync();
+  setupMobileBar();
 }
 
 if(token&&user){enterApp();}
@@ -838,12 +836,9 @@ $('clearBtn').addEventListener('click',()=>{if(!$('transcript').innerText.trim()
 // ── NOTES ──
 function renderNotes(){
   $('nCount').textContent=savedNotes.length;
-  if(!savedNotes.length){$('nList').innerHTML='<div class="lempty">No saved notes yet</div>';return;}
+  if(!savedNotes.length){$('nList').innerHTML='<div class="lempty">No saved notes yet</div>';syncMobileNotes();return;}
   $('nList').innerHTML=savedNotes.map(n=>`<div class="nitem" onclick="viewNote('${n.id}')"><div class="ntop"><span class="npat">${esc(n.patient)}</span><span class="nbadge">${esc(n.note_type||n.type||'')}</span></div><div class="nprev">${esc((n.formatted||n.raw_text||'').replace(/\n/g,' '))}</div><div class="nmeta"><span class="ntime">${esc(n.date||'')} · ${esc(n.time||'')}</span><button class="ndel" onclick="event.stopPropagation();delNote('${n.id}')">✕</button></div></div>`).join('');
-  // sync mobile drawer
-  if(typeof syncMobileNotes==='function')syncMobileNotes();
-  const cnt=document.getElementById('mobileNoteCount');
-  if(cnt)cnt.textContent=savedNotes.length;
+  syncMobileNotes();
 }
 function viewNote(id){const n=savedNotes.find(x=>String(x.id)===String(id));if(!n)return;$('mTitle').textContent=`📋 ${n.note_type||n.type||'Note'} — ${n.patient}`;$('fNote').textContent=n.formatted||n.raw_text||'';$('confirmSave').style.display='none';$('overlay').classList.add('open');}
 async function delNote(id){try{await fetch(API+'/notes/'+id,{method:'DELETE',headers:aH()});}catch{}savedNotes=savedNotes.filter(n=>String(n.id)!==String(id));renderNotes();$('sN').textContent=savedNotes.length;showToast('🗑 Deleted.');}
@@ -855,6 +850,59 @@ let toastT;
 function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 (function(){const loc=JSON.parse(localStorage.getItem('mv_local')||'[]');if(loc.length&&!savedNotes.length){savedNotes=loc;renderNotes();}})();
+
+// ── MOBILE DRAWERS ──
+function openNotesDrawer(){
+  syncMobileNotes();
+  const d=document.getElementById('notesDrawer');
+  if(d){d.classList.add('open');document.body.style.overflow='hidden';}
+}
+function closeNotesDrawer(){
+  const d=document.getElementById('notesDrawer');
+  if(d){d.classList.remove('open');document.body.style.overflow='';}
+}
+function openPatientDrawer(){
+  ['patName','visitDate','chiefCC','noteType'].forEach(id=>{
+    const a=document.getElementById(id),b=document.getElementById(id+'M');
+    if(a&&b)b.value=a.value;
+  });
+  const d=document.getElementById('patientDrawer');
+  if(d){d.classList.add('open');document.body.style.overflow='hidden';}
+}
+function closePatientDrawer(){
+  const d=document.getElementById('patientDrawer');
+  if(d){d.classList.remove('open');document.body.style.overflow='';}
+}
+function syncField(desktopId,mobileId){
+  const a=document.getElementById(desktopId),b=document.getElementById(mobileId);
+  if(a&&b)a.value=b.value;
+}
+function syncMobileNotes(){
+  const el=document.getElementById('mobileNList');
+  if(!el)return;
+  const cnt=document.getElementById('mobileNoteCount');
+  if(cnt)cnt.textContent=savedNotes.length;
+  if(!savedNotes.length){el.innerHTML='<div class="lempty">No saved notes yet</div>';return;}
+  el.innerHTML=savedNotes.map(n=>`<div class="nitem" onclick="viewNote('${n.id}');closeNotesDrawer();"><div class="ntop"><span class="npat">${esc(n.patient||'Unnamed')}</span><span class="nbadge">${esc(n.note_type||'SOAP')}</span></div><div class="nprev">${esc((n.formatted||n.raw_text||'').slice(0,60))}</div><div class="nmeta"><span class="ntime">${esc(n.date||'')}</span><button class="ndel" onclick="event.stopPropagation();delNote('${n.id}')">✕</button></div></div>`).join('');
+}
+// Show/hide mobile bar
+function setupMobileBar(){
+  const bar=document.getElementById('mobileBar');
+  if(bar)bar.style.display=window.innerWidth<=600?'flex':'none';
+}
+window.addEventListener('resize',setupMobileBar);
+document.addEventListener('DOMContentLoaded',setupMobileBar);
+
+// ── Service Worker ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
+
 
 // ── MOBILE DETECTION ──
 const isMobile=()=>window.innerWidth<=600;
@@ -933,28 +981,6 @@ function renderNotesMobileSync(){
   const cnt=document.getElementById('mobileNoteCount');
   if(cnt)cnt.textContent=savedNotes.length;
 }
-
-// ── REAL-TIME SYNC: poll every 30s when app is visible ──
-let syncInterval=null;
-function startSync(){
-  if(syncInterval)return;
-  syncInterval=setInterval(async()=>{
-    if(document.hidden)return;
-    try{
-      const r=await fetch(API+'/notes',{headers:aH()});
-      if(r.ok){
-        const fresh=await r.json();
-        // Only re-render if something changed
-        if(JSON.stringify(fresh)!==JSON.stringify(savedNotes)){
-          savedNotes=fresh;
-          renderNotes();
-          $('sN').textContent=savedNotes.length;
-        }
-      }
-    }catch{}
-  },30000);
-}
-function stopSync(){if(syncInterval){clearInterval(syncInterval);syncInterval=null;}}
 
 // ── Service Worker ──
 if('serviceWorker' in navigator){
