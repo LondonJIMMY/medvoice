@@ -811,7 +811,7 @@ $('confirmSave').addEventListener('click',async()=>{
   if(!pendingNote)return;
   $('confirmSave').disabled=true;$('confirmSave').textContent='Saving…';
   let saved=false;
-  try{const r=await fetch(API+'/notes',{method:'POST',headers:aH(),body:JSON.stringify(pendingNote)});if(r.ok){const d=await r.json();pendingNote.id=d.id;saved=true;}}catch{}
+  try{const r=await fetch(API+'/notes',{method:'POST',headers:aH(),body:JSON.stringify(pendingNote)});if(r.ok){const d=await r.json();pendingNote.id=d.id;saved=true;}else{console.error('Save failed:',r.status,await r.text());}}catch(e){console.error('Save error:',e);}
   if(!saved){pendingNote.id=Date.now();const loc=JSON.parse(localStorage.getItem('mv_local')||'[]');loc.unshift(pendingNote);localStorage.setItem('mv_local',JSON.stringify(loc.slice(0,50)));}
   savedNotes.unshift(pendingNote);renderNotes();$('sN').textContent=savedNotes.length;
   $('overlay').classList.remove('open');$('confirmSave').disabled=false;$('confirmSave').textContent='✅ Confirm & Save';
