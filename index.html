@@ -202,14 +202,179 @@ nav{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 28p
 @media(max-width:1150px){.page{grid-template-columns:240px 1fr}.sidebar-r{display:none}}
 @media(max-width:720px){.page{grid-template-columns:1fr;padding:12px}.sidebar-l{display:none!important}}
 
-/* iPhone safe area (notch + home bar) */
+/* ── MOBILE (≤600px) ── */
+@media(max-width:600px){
+
+  /* Nav */
+  nav{padding:0 16px;height:52px;}
+  .logo-name{font-size:16px;}
+  .spill#bePill{display:none;}
+  .spill#recPill{padding:4px 10px;font-size:10px;}
+  .ubtn{padding:4px 8px 4px 5px;}
+  .uname{display:none;}
+  .theme-btn{width:30px;height:30px;font-size:13px;}
+
+  /* Page grid → single col, no sidebars */
+  .page{grid-template-columns:1fr;padding:12px;gap:12px;}
+  .sidebar-l,.sidebar-r{display:none!important;}
+
+  /* Mic card — centered, full width, breathing room */
+  .mic-card{
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:24px 20px 20px;
+    gap:16px;
+  }
+  .mic-btn{width:96px;height:96px;font-size:36px;}
+  .mic-head{font-size:20px;}
+  .mic-sub{font-size:13px;}
+  .waveform{justify-content:center;height:32px;}
+  .recrow{justify-content:center;}
+
+  /* Patient info strip — horizontal scroll row above mic */
+  .mobile-info-strip{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .mobile-info-strip::-webkit-scrollbar{display:none;}
+  .mobile-chip{
+    flex-shrink:0;
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-sub);
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .mobile-chip.filled{color:var(--accent);border-color:rgba(37,99,235,0.3);background:var(--accent-l);}
+
+  /* Transcript */
+  .tbox{min-height:160px;font-size:15px;padding:14px;line-height:1.8;}
+
+  /* Action buttons — full width stack */
+  .tactions{flex-direction:column;gap:8px;padding:12px;}
+  .tactions .btn{width:100%;justify-content:center;padding:13px 16px;font-size:15px;border-radius:10px;}
+  .btn-p{font-size:15px;}
+
+  /* Word count badge */
+  .ttbar{padding:10px 14px;}
+
+  /* Modal → bottom sheet */
+  .overlay.open{align-items:flex-end;}
+  .modal{
+    width:100vw;max-width:100vw;
+    border-radius:20px 20px 0 0;
+    max-height:92vh;
+    position:fixed;bottom:0;left:0;
+  }
+  @keyframes pi{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:none}}
+  .mft{flex-direction:column;gap:8px;}
+  .mft .btn{width:100%;justify-content:center;padding:13px;}
+
+  /* Toast above home bar */
+  .toast{
+    bottom:calc(16px + env(safe-area-inset-bottom));
+    font-size:13px;
+    max-width:90vw;
+    white-space:normal;
+    text-align:center;
+  }
+
+  /* Auth */
+  .auth-screen{padding:16px;align-items:flex-start;padding-top:60px;}
+  .auth-card{border-radius:16px;}
+  .auth-top{padding:24px 20px;}
+  .auth-body{padding:20px;}
+  .auth-logo-name{font-size:22px;}
+
+  /* Mobile bottom notes bar */
+  .mobile-notes-bar{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    background:var(--nav-bg);
+    border-top:1px solid var(--border);
+    padding:10px 16px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    z-index:90;
+    box-shadow:0 -4px 20px rgba(0,0,0,0.1);
+  }
+  .mobile-notes-btn{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:8px 16px;
+    font-size:13px;font-weight:600;color:var(--text);
+    cursor:pointer;flex:1;justify-content:center;
+  }
+  .mobile-patient-btn{
+    display:flex;align-items:center;gap:6px;
+    background:var(--accent-l);border:1px solid rgba(37,99,235,0.3);
+    border-radius:10px;padding:8px 14px;
+    font-size:13px;font-weight:600;color:var(--accent);
+    cursor:pointer;margin-right:8px;
+  }
+
+  /* Push page content above bottom bar */
+  .app-screen.visible .page{padding-bottom:80px;}
+
+  /* Notes drawer (bottom sheet) */
+  .notes-drawer{
+    position:fixed;inset:0;
+    z-index:400;
+    display:none;
+  }
+  .notes-drawer.open{display:block;}
+  .notes-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);}
+  .notes-sheet{
+    position:absolute;bottom:0;left:0;right:0;
+    background:var(--card-bg);
+    border-radius:20px 20px 0 0;
+    max-height:80vh;
+    display:flex;flex-direction:column;
+    animation:slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .notes-sheet-handle{width:36px;height:4px;background:var(--border-strong);border-radius:2px;margin:12px auto 0;}
+  .notes-sheet-hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .notes-sheet-title{font-size:15px;font-weight:700;}
+  .notes-sheet-body{overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch;}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+  /* Patient drawer */
+  .patient-drawer{
+    position:fixed;inset:0;z-index:400;display:none;
+  }
+  .patient-drawer.open{display:block;}
+  .patient-sheet{
+    position:absolute;bottom:0;left:0;right:0;
+    background:var(--card-bg);
+    border-radius:20px 20px 0 0;
+    padding:0 0 env(safe-area-inset-bottom);
+    animation:slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .patient-sheet-hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .patient-sheet-body{padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .patient-sheet-body .field{margin-bottom:0;}
+  .patient-sheet-body .field input,.patient-sheet-body .field select{font-size:16px;padding:12px 14px;}
+}
+
+/* iPhone safe area */
 nav{padding-left:max(28px,env(safe-area-inset-left));padding-right:max(28px,env(safe-area-inset-right));}
 body{padding-bottom:env(safe-area-inset-bottom);}
 
-/* PWA standalone mode tweaks */
+/* PWA standalone */
 @media(display-mode:standalone){
-  nav{padding-top:env(safe-area-inset-top);}
-  .auth-screen{padding-top:env(safe-area-inset-top);}
+  nav{padding-top:env(safe-area-inset-top);height:calc(52px + env(safe-area-inset-top));}
+  .auth-screen{padding-top:calc(20px + env(safe-area-inset-top));}
 }
 </style>
 </head>
@@ -394,6 +559,55 @@ body{padding-bottom:env(safe-area-inset-bottom);}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Mobile bottom bar (only visible on small screens) -->
+<div class="mobile-notes-bar" id="mobileBar" style="display:none;">
+  <button class="mobile-patient-btn" onclick="openPatientDrawer()">👤 Patient</button>
+  <button class="mobile-notes-btn" onclick="openNotesDrawer()">📋 Saved Notes <span id="mobileNoteCount" style="background:var(--accent);color:white;border-radius:999px;padding:1px 8px;font-size:11px;margin-left:4px;">0</span></button>
+</div>
+
+<!-- Notes bottom sheet drawer -->
+<div class="notes-drawer" id="notesDrawer">
+  <div class="notes-overlay" onclick="closeNotesDrawer()"></div>
+  <div class="notes-sheet">
+    <div class="notes-sheet-handle"></div>
+    <div class="notes-sheet-hd">
+      <span class="notes-sheet-title">📋 Saved Notes</span>
+      <button onclick="closeNotesDrawer()" style="background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;">×</button>
+    </div>
+    <div class="notes-sheet-body" id="mobileNList">
+      <div class="lempty">No saved notes yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- Patient info bottom sheet drawer -->
+<div class="patient-drawer" id="patientDrawer">
+  <div class="notes-overlay" onclick="closePatientDrawer()"></div>
+  <div class="patient-sheet">
+    <div class="notes-sheet-handle"></div>
+    <div class="patient-sheet-hd">
+      <span class="notes-sheet-title">👤 Patient Info</span>
+      <button onclick="closePatientDrawer()" style="background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;">×</button>
+    </div>
+    <div class="patient-sheet-body">
+      <div class="field"><label>Patient Name</label><input type="text" id="patNameM" placeholder="e.g. Jane Smith" oninput="syncField('patName','patNameM')"/></div>
+      <div class="field"><label>Date of Visit</label><input type="date" id="visitDateM" oninput="syncField('visitDate','visitDateM')"/></div>
+      <div class="field"><label>Chief Complaint</label><input type="text" id="chiefCCM" placeholder="e.g. chest pain" oninput="syncField('chiefCC','chiefCCM')"/></div>
+      <div class="field"><label>Note Type</label>
+        <select id="noteTypeM" onchange="syncField('noteType','noteTypeM')">
+          <option value="SOAP">SOAP Note</option>
+          <option value="PROGRESS">Progress Note</option>
+          <option value="DISCHARGE">Discharge Summary</option>
+          <option value="REFERRAL">Referral Letter</option>
+          <option value="PROCEDURE">Procedure Note</option>
+          <option value="ADMISSION">Admission Note</option>
+        </select>
+      </div>
+      <button class="abtn" style="margin-top:4px;" onclick="closePatientDrawer()">Done</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="mhd"><div class="mtitle" id="mTitle">📋 Formatted Note</div><button class="mclose" id="mClose">✕</button></div>
@@ -623,6 +837,122 @@ let toastT;
 function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 (function(){const loc=JSON.parse(localStorage.getItem('mv_local')||'[]');if(loc.length&&!savedNotes.length){savedNotes=loc;renderNotes();}})();
+
+// ── MOBILE DETECTION ──
+const isMobile=()=>window.innerWidth<=600;
+
+function setupMobileBar(){
+  const bar=document.getElementById('mobileBar');
+  if(!bar)return;
+  bar.style.display=isMobile()?'flex':'none';
+}
+window.addEventListener('resize',setupMobileBar);
+
+// Show mobile bar after login
+const origShowApp=window.showApp;
+document.addEventListener('DOMContentLoaded',()=>{
+  setupMobileBar();
+  // Set today's date in mobile fields
+  const today=new Date().toISOString().split('T')[0];
+  const vdM=document.getElementById('visitDateM');
+  if(vdM&&!vdM.value)vdM.value=today;
+});
+
+// ── DRAWERS ──
+function openNotesDrawer(){
+  syncMobileNotes();
+  document.getElementById('notesDrawer').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeNotesDrawer(){
+  document.getElementById('notesDrawer').classList.remove('open');
+  document.body.style.overflow='';
+}
+function openPatientDrawer(){
+  // Sync desktop values → mobile fields
+  ['patName','visitDate','chiefCC','noteType'].forEach(id=>{
+    const d=document.getElementById(id);
+    const m=document.getElementById(id+'M');
+    if(d&&m)m.value=d.value;
+  });
+  document.getElementById('patientDrawer').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePatientDrawer(){
+  document.getElementById('patientDrawer').classList.remove('open');
+  document.body.style.overflow='';
+}
+function syncField(desktopId,mobileId){
+  const d=document.getElementById(desktopId);
+  const m=document.getElementById(mobileId);
+  if(d&&m)d.value=m.value;
+}
+
+function syncMobileNotes(){
+  const container=document.getElementById('mobileNList');
+  if(!container)return;
+  if(!savedNotes.length){container.innerHTML='<div class="lempty">No saved notes yet</div>';return;}
+  container.innerHTML=savedNotes.map(n=>`
+    <div class="nitem" onclick="openNote(${JSON.stringify(n).replace(/"/g,'&quot;')});closeNotesDrawer();">
+      <div class="ntop">
+        <span class="npat">${esc(n.patient_name||'Unnamed')}</span>
+        <span class="nbadge">${esc(n.note_type||'SOAP')}</span>
+      </div>
+      <div class="nprev">${esc((n.raw_text||'').slice(0,60))}…</div>
+      <div class="nmeta">
+        <span class="ntime">${n.created_at?new Date(n.created_at).toLocaleDateString():''}</span>
+        <button class="ndel" onclick="event.stopPropagation();delNote('${n.id}');syncMobileNotes();">🗑</button>
+      </div>
+    </div>`).join('');
+  // Update badge count
+  const cnt=document.getElementById('mobileNoteCount');
+  if(cnt)cnt.textContent=savedNotes.length;
+}
+
+// Patch renderNotes to also update mobile
+const _origRender=window.renderNotes;
+function renderNotes(){
+  if(_origRender)_origRender();
+  syncMobileNotes();
+  const cnt=document.getElementById('mobileNoteCount');
+  if(cnt)cnt.textContent=savedNotes.length;
+}
+
+// ── REAL-TIME SYNC: poll every 30s when app is visible ──
+let syncInterval=null;
+function startSync(){
+  if(syncInterval)return;
+  syncInterval=setInterval(async()=>{
+    if(document.hidden)return;
+    try{
+      const r=await fetch(API+'/notes',{headers:aH()});
+      if(r.ok){
+        const fresh=await r.json();
+        // Only re-render if something changed
+        if(JSON.stringify(fresh)!==JSON.stringify(savedNotes)){
+          savedNotes=fresh;
+          renderNotes();
+          $('sN').textContent=savedNotes.length;
+        }
+      }
+    }catch{}
+  },30000);
+}
+function stopSync(){if(syncInterval){clearInterval(syncInterval);syncInterval=null;}}
+
+// Start sync after login — hook into existing loadNotes
+const _origLoad=window.loadNotes;
+async function loadNotes(){
+  if(_origLoad)await _origLoad();
+  syncMobileNotes();
+  startSync();
+}
+// Stop when signed out
+const _origOut=window.doSignOut;
+async function doSignOut(){
+  stopSync();
+  if(_origOut)await _origOut();
+}
 
 // ── Service Worker ──
 if('serviceWorker' in navigator){
